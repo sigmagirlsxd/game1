@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gra - Unikaj Przeszkód</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        #gameCanvas {
+            border: 5px solid white;
+            background-color: #34495e;
+        }
+        
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            z-index: 1;
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="score">Wynik: 0</div>
+
+    <script>
+        // Przygotowanie gry
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+
+        // Gracz
+        const player = {
+            width: 50,
+            height: 50,
+            x: canvas.width / 2 - 25,
+            y: canvas.height - 60,
+            speed: 5,
+            color: '#ff6347'
+        };
+
+        // Przeszkody
+        let obstacles = [];
+        let obstacleSpeed = 3;
+
+        let score = 0;
+        let gameOver = false;
+
+        // Rysowanie gracza
+        function drawPlayer() {
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
+
+        // Rysowanie przeszkód
+        function drawObstacles() {
+            obstacles.forEach(obstacle => {
+                ctx.fillStyle = '#1abc9c';
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            });
+        }
+
+        // Rysowanie tekstu "Game Over"
+        function gameOverText() {
+            ctx.font = '40px Arial';
+            ctx.fillStyle = 'white';
+            ctx.fillText('GAME OVER', canvas.width / 2 - 120, canvas.height / 2);
+            ctx.fillText('Kliknij F5, aby zacząć od nowa', canvas.width / 2 - 180, canvas.height / 2 + 40);
+        }
+
+        // Funkcja do generowania przeszkód
+        function generateObstacle() {
+            const width = Math.random() * (100 - 30) + 30;
+            const x = Math.random() * (canvas.width - width);
+            obstacles.push({x, y: -50, width, height: 20});
+        }
+
+        // Ustawianie ruchu gracza
+        function movePlayer() {
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft' && player.x > 0) {
+                    player.x -= player.speed;
+                }
+                if (e.key === 'ArrowRight' && player.x + player.width < canvas.width) {
+                    player.x += player.speed;
+                }
+            });
+        }
+
+        // Rysowanie wyniku
+        function drawScore() {
+            scoreDisplay.textContent = `Wynik: ${score}`;
+        }
+
+        // Funkcja do aktualizacji gry
+        function updateGame() {
+            if (gameOver) {
+                gameOverText();
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Rysowanie gracza
+            drawPlayer();
+
+            // Rysowanie przeszkód
+            drawObstacles();
+
+            // Przesuwanie przeszkód w dół
+            obstacles.forEach(obstacle => {
+                obstacle.y += obstacleSpeed;
+
+                // Sprawdzanie kolizji
+                if (obstacle.y + obstacle.height > player.y && 
+                    obstacle.y < player.y + player.height &&
+                    obstacle.x < player.x + player.width &&
+                    obstacle.x + obstacle.width > player.x) {
+                    gameOver = true;
+                }
+            });
+
+            // Usuwanie przeszkód, które przeszły poza ekran
+            obstacles = obstacles.filter(obstacle => obstacle.y < canvas.height);
+
+            // Generowanie nowych przeszkód
+            if (Math.random() < 0.02) {
+                generateObstacle();
+            }
+
+            // Zwiększanie wyniku
+            score++;
+
+            // Rysowanie wyniku
+            drawScore();
+
+            // Aktualizowanie gry
+            requestAnimationFrame(updateGame);
+        }
+
+        // Start gry
+        movePlayer();
+        updateGame();
+    </script>
+
+</body>
+</html>
